@@ -2,16 +2,55 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0a0a0a" />
   <meta name="format-detection" content="telephone=no" />
+  <script>
+    (function () {
+      function touchOrCoarsePointer() {
+        try {
+          if ((navigator.maxTouchPoints || 0) > 0) return true;
+          if (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) return true;
+        } catch (e) {}
+        return false;
+      }
+      function applyDeviceGate() {
+        if (touchOrCoarsePointer()) document.documentElement.classList.add("device-allowed");
+        else document.documentElement.classList.remove("device-allowed");
+      }
+      applyDeviceGate();
+      window.addEventListener("resize", applyDeviceGate, { passive: true });
+    })();
+  </script>
   <title>Nosso tempo juntos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
+    /* Só telemóveis/tablets com toque: sem isto, ecrã totalmente preto (PC). */
+    html:not(.device-allowed),
+    html:not(.device-allowed) body {
+      background: #000 !important;
+    }
+
+    .desktop-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 2147483647;
+      margin: 0;
+      padding: 0;
+      background: #000;
+      display: block;
+      pointer-events: auto;
+    }
+
+    html.device-allowed .desktop-gate {
+      display: none !important;
+      pointer-events: none !important;
+    }
+
     :root {
       --bg-deep: #050505;
       --bg-card: rgba(18, 6, 8, 0.72);
@@ -43,7 +82,8 @@
       min-height: 100dvh;
       min-height: -webkit-fill-available;
       overflow-x: hidden;
-      padding: calc(1.25rem + var(--safe-top)) 1.25rem calc(1.5rem + var(--safe-bottom));
+      padding: calc(1.25rem + var(--safe-top)) max(1.25rem, env(safe-area-inset-right, 0px))
+        calc(1.5rem + var(--safe-bottom)) max(1.25rem, env(safe-area-inset-left, 0px));
       -webkit-font-smoothing: antialiased;
     }
 
@@ -593,18 +633,84 @@
         0 0 24px -8px rgba(220, 38, 38, 0.25);
     }
 
-    /* type="date" = seletor nativo do SO; appearance:none esconde o ícone no WebKit. */
-    .album-field input[type="date"],
-    .album-edit-form input[type="date"] {
-      -webkit-appearance: auto;
-      appearance: auto;
+    .album-field .album-date-shell input[type="date"]:focus,
+    .album-edit-form .album-date-shell input[type="date"]:focus {
+      border: none;
+      box-shadow: none;
+    }
+
+    /* Invólucro: no iOS o type="date" com appearance nativa ignora width; o shell fixa a largura. */
+    .album-date-shell {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      border-radius: 0.7rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.35);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
       color-scheme: dark;
+    }
+
+    .album-date-shell--compact {
+      border-radius: 0.65rem;
+    }
+
+    .album-date-shell:focus-within {
+      border-color: rgba(251, 191, 36, 0.35);
+      box-shadow:
+        0 0 0 1px rgba(220, 38, 38, 0.2),
+        0 0 24px -8px rgba(220, 38, 38, 0.25);
+    }
+
+    .album-date-shell input[type="date"] {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      margin: 0;
+      box-sizing: border-box;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      color: #fafaf9;
+      font-family: inherit;
+      font-size: 0.95rem;
+      line-height: 1.3;
+      padding: 0.72rem 2.35rem 0.72rem 0.9rem;
       min-height: 2.85rem;
+      -webkit-appearance: none;
+      appearance: none;
+      color-scheme: dark;
+    }
+
+    .album-date-shell input[type="date"]:focus {
+      outline: none;
+    }
+
+    /* WebKit (iPhone): força o texto da data a respeitar a largura do invólucro */
+    .album-date-shell input[type="date"]::-webkit-datetime-edit,
+    .album-date-shell input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
+      padding: 0;
+      margin: 0;
+    }
+
+    .album-date-shell input[type="date"]::-webkit-datetime-edit-text {
+      padding: 0 0.15rem;
+    }
+
+    .album-edit-form .album-date-shell input[type="date"] {
+      font-size: 0.92rem;
+      padding: 0.65rem 2.35rem 0.65rem 0.75rem;
     }
 
     /* Ícone do calendário sempre branco (WebKit: SVG próprio; o nativo costuma vir escuro no fundo preto) */
-    .album-field input[type="date"]::-webkit-calendar-picker-indicator,
-    .album-edit-form input[type="date"]::-webkit-calendar-picker-indicator,
+    .album-field .album-date-shell input[type="date"]::-webkit-calendar-picker-indicator,
+    .album-edit-form .album-date-shell input[type="date"]::-webkit-calendar-picker-indicator,
     #albumDate::-webkit-calendar-picker-indicator,
     #albumEditDate::-webkit-calendar-picker-indicator {
       opacity: 1;
@@ -617,8 +723,8 @@
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.85' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='5' width='17' height='15.5' rx='2'/%3E%3Cpath d='M8 3v3.5M16 3v3.5M3.5 11h17'/%3E%3C/svg%3E");
     }
 
-    .album-field input[type="date"]::-moz-calendar-picker-indicator,
-    .album-edit-form input[type="date"]::-moz-calendar-picker-indicator,
+    .album-field .album-date-shell input[type="date"]::-moz-calendar-picker-indicator,
+    .album-edit-form .album-date-shell input[type="date"]::-moz-calendar-picker-indicator,
     #albumDate::-moz-calendar-picker-indicator,
     #albumEditDate::-moz-calendar-picker-indicator {
       opacity: 1;
@@ -635,8 +741,8 @@
       }
 
       .album-edit-form input[type="text"],
-      .album-edit-form input[type="date"],
-      .album-edit-form textarea {
+      .album-edit-form textarea,
+      .album-edit-form .album-date-shell input[type="date"] {
         font-size: max(1rem, 16px);
       }
     }
@@ -1078,6 +1184,133 @@
       display: flex;
     }
 
+    /* Confirmação de apagar memória (substitui confirm nativo) */
+    .album-delete-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 330;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      padding-top: calc(1rem + var(--safe-top));
+      padding-bottom: calc(1rem + var(--safe-bottom));
+    }
+
+    .album-delete-modal.open {
+      display: flex;
+    }
+
+    .album-delete-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .album-delete-panel {
+      position: relative;
+      width: 100%;
+      max-width: 20rem;
+      border-radius: 1.1rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: linear-gradient(165deg, rgba(36, 16, 22, 0.98) 0%, rgba(10, 5, 7, 0.99) 100%);
+      box-shadow:
+        0 0 0 1px rgba(220, 38, 38, 0.12) inset,
+        0 28px 72px rgba(0, 0, 0, 0.75);
+      padding: 1.35rem 1.25rem 1.25rem;
+      text-align: center;
+    }
+
+    .album-delete-panel::before {
+      content: "";
+      display: block;
+      width: 2.5rem;
+      height: 2px;
+      margin: 0 auto 1rem;
+      border-radius: 2px;
+      background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.55), rgba(220, 38, 38, 0.5), transparent);
+      opacity: 0.9;
+    }
+
+    .album-delete-title {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(1.2rem, 4.2vw, 1.45rem);
+      font-weight: 600;
+      color: #fff;
+      margin: 0 0 0.65rem;
+      line-height: 1.3;
+      letter-spacing: 0.02em;
+    }
+
+    .album-delete-hint {
+      font-family: "Outfit", system-ui, sans-serif;
+      font-size: 0.82rem;
+      font-weight: 300;
+      color: rgba(214, 211, 209, 0.78);
+      line-height: 1.5;
+      margin: 0 0 1.25rem;
+    }
+
+    .album-delete-actions {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      justify-content: center;
+    }
+
+    .album-delete-btn {
+      appearance: none;
+      -webkit-appearance: none;
+      flex: 1 1 calc(50% - 0.3rem);
+      min-width: 0;
+      margin: 0;
+      padding: 0.55rem 0.85rem;
+      border-radius: 0.65rem;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .album-delete-btn:active {
+      transform: scale(0.98);
+    }
+
+    .album-delete-btn--ghost {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(12, 8, 10, 0.55);
+      color: rgba(250, 250, 249, 0.9);
+    }
+
+    .album-delete-btn--ghost:hover {
+      border-color: rgba(255, 255, 255, 0.26);
+      background: rgba(24, 12, 16, 0.75);
+      color: #fff;
+    }
+
+    .album-delete-btn--danger {
+      border: 1px solid rgba(248, 113, 113, 0.45);
+      background: linear-gradient(165deg, rgba(220, 38, 38, 0.42), rgba(40, 12, 18, 0.96));
+      color: #fff;
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.2) inset,
+        0 8px 24px -10px rgba(220, 38, 38, 0.35);
+    }
+
+    .album-delete-btn--danger:hover {
+      border-color: rgba(254, 202, 202, 0.55);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+        0 12px 28px -10px rgba(220, 38, 38, 0.45);
+    }
+
     .album-edit-backdrop {
       position: absolute;
       inset: 0;
@@ -1147,7 +1380,6 @@
     }
 
     .album-edit-form input[type="text"],
-    .album-edit-form input[type="date"],
     .album-edit-form textarea {
       width: 100%;
       min-width: 0;
@@ -1159,6 +1391,10 @@
       font-family: inherit;
       font-size: 0.92rem;
       padding: 0.65rem 0.75rem;
+    }
+
+    .album-edit-form .album-date-shell {
+      border-color: rgba(255, 255, 255, 0.1);
     }
 
     .album-edit-form textarea {
@@ -1507,9 +1743,185 @@
       border-color: rgba(251, 191, 36, 0.4);
       background: rgba(30, 12, 16, 0.85);
     }
+
+    /* Tablet / iPad: coluna legível, mais ar e grelhas confortáveis */
+    @media (min-width: 768px) {
+      body {
+        padding: calc(1.5rem + var(--safe-top)) max(1.5rem, env(safe-area-inset-right, 0px))
+          calc(1.75rem + var(--safe-bottom)) max(1.5rem, env(safe-area-inset-left, 0px));
+      }
+
+      header {
+        max-width: 40rem;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 2.25rem;
+      }
+
+      h1 {
+        font-size: clamp(2.1rem, 4.5vw, 2.75rem);
+      }
+
+      .subtitle {
+        font-size: 1.02rem;
+      }
+
+      .hero-card {
+        max-width: 34rem;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 1.75rem 1.6rem;
+      }
+
+      .live-clock .big {
+        font-size: clamp(2.85rem, 7vw, 3.85rem);
+      }
+
+      .grid {
+        max-width: 42rem;
+        margin-left: auto;
+        margin-right: auto;
+        gap: 1rem;
+      }
+
+      .stat {
+        padding: 1.1rem 1rem;
+      }
+
+      .stat .value {
+        font-size: clamp(1.55rem, 3.2vw, 2rem);
+      }
+
+      section:not(.album-section) {
+        max-width: 44rem;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 2.25rem;
+      }
+
+      h2 {
+        font-size: 1.28rem;
+        margin-bottom: 1rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.9rem 1.15rem;
+      }
+
+      .fact {
+        align-items: flex-start;
+        padding: 1.05rem 1.15rem;
+      }
+
+      .fact-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+      }
+
+      .fact-icon svg {
+        width: 1.2rem;
+        height: 1.2rem;
+      }
+
+      .fact p {
+        font-size: 0.95rem;
+        line-height: 1.52;
+      }
+
+      .album-section {
+        max-width: min(56rem, 100%);
+        margin-left: auto;
+        margin-right: auto;
+        padding-top: 2.65rem;
+      }
+
+      .album-head {
+        max-width: 34rem;
+      }
+
+      .album-hint {
+        font-size: 0.95rem;
+      }
+
+      .album-form-card {
+        max-width: min(38rem, 100%);
+        padding: clamp(1.45rem, 2.8vw, 2rem);
+      }
+
+      .album-grid {
+        gap: 1.15rem;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 212px), 1fr));
+      }
+
+      footer {
+        max-width: 40rem;
+        margin-left: auto;
+        margin-right: auto;
+        font-size: 0.85rem;
+      }
+
+      .love-tap-wrap {
+        max-width: 36rem;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .album-edit-modal,
+      .album-delete-modal {
+        padding-left: max(1.5rem, env(safe-area-inset-left, 0px));
+        padding-right: max(1.5rem, env(safe-area-inset-right, 0px));
+      }
+
+      .album-edit-panel {
+        max-width: 24rem;
+      }
+
+      .album-delete-panel {
+        max-width: 22rem;
+        padding: 1.45rem 1.35rem 1.3rem;
+      }
+
+      .album-lightbox {
+        padding-left: max(1.25rem, env(safe-area-inset-left, 0px));
+        padding-right: max(1.25rem, env(safe-area-inset-right, 0px));
+      }
+
+      .album-lightbox img {
+        max-width: min(86vw, 54rem);
+        max-height: min(74vh, 100%);
+      }
+
+      .album-lightbox-text {
+        max-width: min(34rem, 92%);
+      }
+
+      .album-lightbox-text p {
+        font-size: 0.92rem;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .album-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1.25rem;
+      }
+
+      .album-section {
+        max-width: min(60rem, 100%);
+      }
+    }
+
+    @media (min-width: 1100px) {
+      .facts {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
   </style>
 </head>
 <body>
+  <div id="desktopGate" class="desktop-gate" aria-hidden="true"></div>
   <div id="heartLayer" class="heart-burst" aria-hidden="true"></div>
   <div class="bg" aria-hidden="true"></div>
 
@@ -1555,7 +1967,9 @@
         <div class="album-field-row">
           <div class="album-field">
             <label for="albumDate">Data</label>
-            <input id="albumDate" name="date" type="date" required />
+            <div class="album-date-shell">
+              <input id="albumDate" name="date" type="date" required />
+            </div>
           </div>
           <div class="album-field">
             <label for="albumPlace">Lugar</label>
@@ -1625,7 +2039,9 @@
         </div>
         <div class="album-field">
           <label for="albumEditDate">Data</label>
-          <input id="albumEditDate" type="date" required />
+          <div class="album-date-shell album-date-shell--compact">
+            <input id="albumEditDate" type="date" required />
+          </div>
         </div>
         <div class="album-field">
           <label for="albumEditPlace">Lugar</label>
@@ -1671,6 +2087,18 @@
         </div>
         <p class="album-edit-msg" id="albumEditMsg" role="status"></p>
       </form>
+    </div>
+  </div>
+
+  <div class="album-delete-modal" id="albumDeleteModal" aria-hidden="true">
+    <div class="album-delete-backdrop" id="albumDeleteBackdrop" tabindex="-1"></div>
+    <div class="album-delete-panel" role="alertdialog" aria-modal="true" aria-labelledby="albumDeleteTitle" aria-describedby="albumDeleteHint">
+      <h3 class="album-delete-title" id="albumDeleteTitle">Deseja realmente apagar, meu amor?</h3>
+      <p class="album-delete-hint" id="albumDeleteHint"></p>
+      <div class="album-delete-actions">
+        <button type="button" class="album-delete-btn album-delete-btn--ghost" id="albumDeleteCancel">Não, voltar</button>
+        <button type="button" class="album-delete-btn album-delete-btn--danger" id="albumDeleteConfirm">Sim, apagar</button>
+      </div>
     </div>
   </div>
 
@@ -2681,6 +3109,12 @@
       var editPhotoPlaceholder = document.getElementById("albumEditPhotoPlaceholder");
       var albumEditNewPhotoObjectUrl = null;
       var editPhotoPlaceholderDefault = "Toque para escolher outra imagem";
+      var deleteModal = document.getElementById("albumDeleteModal");
+      var deleteBackdrop = document.getElementById("albumDeleteBackdrop");
+      var deleteCancel = document.getElementById("albumDeleteCancel");
+      var deleteConfirmBtn = document.getElementById("albumDeleteConfirm");
+      var deleteHint = document.getElementById("albumDeleteHint");
+      var pendingDeleteAction = null;
 
       if (!grid || !form) return;
 
@@ -2820,6 +3254,16 @@
         return !!(editModal && editModal.classList.contains("open"));
       }
 
+      function isAlbumDeleteModalOpen() {
+        return !!(deleteModal && deleteModal.classList.contains("open"));
+      }
+
+      function syncAlbumBodyOverflow() {
+        var locked =
+          (lb && lb.classList.contains("open")) || isAlbumEditModalOpen() || isAlbumDeleteModalOpen();
+        document.body.style.overflow = locked ? "hidden" : "";
+      }
+
       function formatDisplayDate(iso) {
         if (!iso) return "";
         try {
@@ -2858,13 +3302,13 @@
           lbDesc.style.display = "none";
         }
         lb.classList.add("open");
-        document.body.style.overflow = "hidden";
+        syncAlbumBodyOverflow();
       }
 
       function closeLightbox() {
         lb.classList.remove("open");
         lbImg.removeAttribute("src");
-        if (!isAlbumEditModalOpen()) document.body.style.overflow = "";
+        syncAlbumBodyOverflow();
       }
 
       function findEntry(id) {
@@ -2894,7 +3338,7 @@
         setAlbumEditMsg("", "");
         editModal.classList.add("open");
         editModal.setAttribute("aria-hidden", "false");
-        document.body.style.overflow = "hidden";
+        syncAlbumBodyOverflow();
         try {
           editTitle.focus();
         } catch (eF) {}
@@ -2906,7 +3350,46 @@
         if (editCurrentPreview) editCurrentPreview.removeAttribute("src");
         editModal.classList.remove("open");
         editModal.setAttribute("aria-hidden", "true");
-        if (!lb || !lb.classList.contains("open")) document.body.style.overflow = "";
+        syncAlbumBodyOverflow();
+      }
+
+      function openAlbumDeleteConfirm(hintText, onConfirm) {
+        if (!deleteModal || !onConfirm) return;
+        pendingDeleteAction = onConfirm;
+        if (deleteHint) deleteHint.textContent = hintText || "";
+        deleteModal.classList.add("open");
+        deleteModal.setAttribute("aria-hidden", "false");
+        syncAlbumBodyOverflow();
+        try {
+          if (deleteCancel) deleteCancel.focus();
+        } catch (eDelF) {}
+      }
+
+      function closeAlbumDeleteConfirm() {
+        if (!deleteModal) return;
+        pendingDeleteAction = null;
+        deleteModal.classList.remove("open");
+        deleteModal.setAttribute("aria-hidden", "true");
+        if (deleteHint) deleteHint.textContent = "";
+        syncAlbumBodyOverflow();
+      }
+
+      if (deleteCancel) {
+        deleteCancel.addEventListener("click", function () {
+          closeAlbumDeleteConfirm();
+        });
+      }
+      if (deleteBackdrop) {
+        deleteBackdrop.addEventListener("click", function () {
+          closeAlbumDeleteConfirm();
+        });
+      }
+      if (deleteConfirmBtn) {
+        deleteConfirmBtn.addEventListener("click", function () {
+          var fn = pendingDeleteAction;
+          closeAlbumDeleteConfirm();
+          if (typeof fn === "function") fn();
+        });
       }
 
       function renderAlbumList(entries) {
@@ -2985,26 +3468,31 @@
           var lid = delBtn.getAttribute("data-id");
           if (!lid || src === "manifest") return;
           if (src === "cloud") {
-            if (!confirm("Apagar esta memória para os dois (em todos os lugares)?")) return;
-            var ent = findEntry(lid);
-            if (!ent) return;
-            cloudDeleteEntry(ent, function (err) {
-              if (err) {
-                alert("Não consegui apagar esta memória agora. Tente de novo daqui a pouco.");
-                return;
+            openAlbumDeleteConfirm(
+              "Isto apaga a memória para os dois, em todos os lugares.",
+              function () {
+                var ent = findEntry(lid);
+                if (!ent) return;
+                cloudDeleteEntry(ent, function (err) {
+                  if (err) {
+                    alert("Não consegui apagar esta memória agora. Tente de novo daqui a pouco.");
+                    return;
+                  }
+                  refreshAlbum();
+                });
               }
-              refreshAlbum();
-            });
+            );
             return;
           }
           if (src === "idb") {
-            if (!lid || !confirm("Apagar esta memória deste celular?")) return;
-            idbDelete(lid, function (ok) {
-              if (!ok) {
-                alert("Não foi possível apagar.");
-                return;
-              }
-              refreshAlbum();
+            openAlbumDeleteConfirm("Isto apaga só neste aparelho.", function () {
+              idbDelete(lid, function (ok) {
+                if (!ok) {
+                  alert("Não foi possível apagar.");
+                  return;
+                }
+                refreshAlbum();
+              });
             });
           }
           return;
@@ -3033,6 +3521,10 @@
       }
       document.addEventListener("keydown", function (ev) {
         if (ev.key !== "Escape") return;
+        if (isAlbumDeleteModalOpen()) {
+          closeAlbumDeleteConfirm();
+          return;
+        }
         if (isAlbumEditModalOpen()) {
           closeAlbumEditModal();
           return;
