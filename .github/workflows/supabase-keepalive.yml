@@ -1,0 +1,44 @@
+# Mantém o projeto Supabase (plano grátis) com atividade — evita hibernação.
+# GitHub → Settings → Secrets and variables → Actions:
+#   SUPABASE_URL      (ex.: https://xxxx.supabase.co)
+#   SUPABASE_ANON_KEY (anon public key do dashboard)
+#
+# O repositório tem de estar no GitHub e este ficheiro na branch default.
+
+name: Supabase keepalive
+
+on:
+  schedule:
+    # Todo dia ~09:00 Lisboa (UTC+1 inverno) — ajuste o cron se quiser
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inserir ping na tabela keepalive_ping
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -e
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Defina os secrets SUPABASE_URL e SUPABASE_ANON_KEY nas Actions deste repositório."
+            exit 1
+          fi
+          BASE="${SUPABASE_URL%/}"
+          ID="gh-${{ github.run_id }}-${{ github.run_attempt }}-$(date -u +%s)"
+          CODE=$(curl -sS -o /tmp/ping_body.txt -w "%{http_code}" \
+            -X POST "$BASE/rest/v1/keepalive_ping" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "[{\"id\":\"$ID\"}]")
+          if [ "$CODE" != "201" ] && [ "$CODE" != "200" ]; then
+            echo "::error::Resposta HTTP $CODE"
+            cat /tmp/ping_body.txt
+            exit 1
+          fi
+          echo "OK — ping gravado (HTTP $CODE)."
