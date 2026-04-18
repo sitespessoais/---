@@ -1,0 +1,47 @@
+Nuvem (Supabase) — o que ainda importa
+======================================
+
+Você já tem: projeto, **config.js** com URL + anon, e o SQL das tabelas
+(`album_entries` + `keepalive_ping` + policies do banco). Não precisa repetir
+isso.
+
+--- Só faça isto se der problema ---
+
+**Upload da foto falhar (403 / erro no Storage):** no Supabase, **SQL Editor**,
+rode de novo o arquivo **supabase-storage.sql** (bucket `magens` + policies).
+Se você já tinha rodado uma versão antiga, rode **esta versão atualizada**:
+as policies agora não usam só `TO anon`, o que costuma destravar o upload.
+Se o INSERT do bucket der erro, crie o bucket **magens** como público em
+Storage e rode o SQL outra vez.
+
+**“Failed to fetch” / não envia:** o `index.html` aberto direto do disco
+(`file://`) costuma bloquear chamada pra Supabase. Abra pelo **Live Server**
+(VS Code), `python -m http.server` na pasta, ou publique o site em **https**.
+
+**Outro projeto do zero (sem tabelas):** use **supabase-tabelas-iniciais.sql**,
+depois **supabase-storage.sql**.
+
+--- Opcional (keepalive diário) ---
+
+O repositório inclui `.github/workflows/supabase-keepalive.yml` (corre 1×/dia
+em UTC e também manualmente em “Run workflow”).
+
+Para **funcionar de verdade**:
+1. Código no **GitHub** (não só no PC).
+2. **Settings → Secrets and variables → Actions**: crie `SUPABASE_URL` e
+   `SUPABASE_ANON_KEY` (os mesmos valores do `config.js`).
+3. **Actions** → confirme que o workflow corre sem erro (verde).
+
+Sem secrets ou sem push para o GitHub, **nada corre** — o projeto local não
+agenda isto sozinho.
+
+Doc Supabase: https://supabase.com/docs/guides/platform/billing-faq
+
+--- Segurança ---
+
+Chave anon no site não é ultra-secreta: quem tiver o link + seu `config.js`
+pode apagar se as policies forem abertas. Não espalhe o link.
+
+--- Sem nuvem ---
+
+Sem `config.js` o site fica só no celular (IndexedDB).

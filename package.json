@@ -1,0 +1,8 @@
+{
+  "name": "nosso-tempo-juntos",
+  "private": true,
+  "description": "Contador + álbum (IndexedDB). server.js opcional pra gravar em magens/.",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

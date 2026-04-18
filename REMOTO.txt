@@ -1,0 +1,19 @@
+Álbum de fotos — como funciona agora
+=====================================
+
+O formulário do álbum **não precisa de npm nem de Node rodando**.
+
+• As fotos que você adiciona no site ficam no **IndexedDB deste navegador**
+  (celular ou PC). Funciona offline e em qualquer rede.
+
+• A pasta **magens/** no projeto continua útil se você quiser fotos “fixas”
+  no repositório: edite **magens/manifest.json** e coloque os arquivos na pasta;
+  depois use «Atualizar álbum» com a página servida por Live Server ou
+  parecido (abrir só file:// costuma não carregar o JSON).
+
+Opcional — servidor Node (server.js)
+-------------------------------------
+
+O arquivo **server.js** continua disponível se um dia você quiser gravar uploads
+direto em magens/ no PC (PC ligado + túnel ngrok, etc.). No dia a dia do
+álbum no celular, **não é necessário**.
