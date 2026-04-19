@@ -3426,7 +3426,6 @@
           var src = thumbUrlFor(e);
           var meta = formatDisplayDate(e.date);
           if (e.location) meta += (meta ? " · " : "") + e.location;
-          if (e.createdAt) meta += (meta ? " · " : "") + "Adicionado " + formatCreatedAt(e.createdAt);
           var descRaw = (e.description || "").trim();
           var descHtml = "";
           if (descRaw) {
