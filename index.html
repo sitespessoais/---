@@ -85,6 +85,7 @@
       min-height: -webkit-fill-available;
       overflow-x: hidden;
       width: 100%;
+      touch-action: pan-y;
       padding: calc(1.25rem + var(--safe-top)) max(1.25rem, env(safe-area-inset-right, 0px))
         calc(1.5rem + var(--safe-bottom)) max(1.25rem, env(safe-area-inset-left, 0px));
       -webkit-font-smoothing: antialiased;
@@ -972,6 +973,7 @@
         overflow-x: auto;
         overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
         overscroll-behavior-x: contain;
         scroll-snap-type: x mandatory;
         scrollbar-width: thin;
