@@ -3279,6 +3279,23 @@
         }
       }
 
+      function formatCreatedAt(iso) {
+        if (!iso) return "";
+        try {
+          var d = new Date(iso);
+          if (isNaN(d.getTime())) return iso;
+          return d.toLocaleString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        } catch (e) {
+          return iso;
+        }
+      }
+
       function imgSrcAttr(src) {
         if (!src) return "";
         if (src.indexOf("data:") === 0) return src;
@@ -3293,6 +3310,7 @@
         var metaParts = [];
         if (entry.date) metaParts.push(formatDisplayDate(entry.date));
         if (entry.location) metaParts.push(entry.location);
+        if (entry.createdAt) metaParts.push("Adicionado " + formatCreatedAt(entry.createdAt));
         lbMeta.textContent = metaParts.join(" · ");
         if (entry.description) {
           lbDesc.textContent = entry.description;
@@ -3398,7 +3416,7 @@
         if (entries.length === 0) {
           grid.innerHTML = isCloud()
             ? '<div class="album-empty">Este álbum ainda está esperando nossa primeira foto. Salve em cima — o momento fica com a gente, em qualquer lugar.</div>'
-            : '<div class="album-empty">Ainda não há memórias guardadas aqui. Escreva um título, escolha uma foto em cima e deixe este cantinho começar a contar a nossa história.</div>';
+            : '<div class="album-empty">Ainda não há memórias guardadas aqui. Escreva um título, escolha uma foto em cima e deixe este lugar começar a contar a nossa história.</div>';
           return;
         }
         var html = "";
@@ -3408,6 +3426,7 @@
           var src = thumbUrlFor(e);
           var meta = formatDisplayDate(e.date);
           if (e.location) meta += (meta ? " · " : "") + e.location;
+          if (e.createdAt) meta += (meta ? " · " : "") + "Adicionado " + formatCreatedAt(e.createdAt);
           var descRaw = (e.description || "").trim();
           var descHtml = "";
           if (descRaw) {
